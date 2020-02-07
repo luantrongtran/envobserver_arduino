@@ -13,7 +13,7 @@
 void post(String);
 void blink(int);
 void doubleBlink(int);
-void uploadData(float temperature, float humidity, float soilMoisture);
+void uploadData();
 String formatIso8601(RtcDateTime);
 void loadConfig();
 void tripleBlink(int);
@@ -96,12 +96,12 @@ void setup() {
   rtc.Enable32kHzPin(false);
   rtc.SetSquareWavePin(DS3231SquareWavePin_ModeNone);
 
+  // Setup pin for LEDs
   pinMode(WIFI_LED_PIN, OUTPUT);
   digitalWrite(WIFI_LED_PIN, HIGH);
 
-  // Connect to Wifi
-//  WiFi.begin(config.wifiName, config.wifiPass);
-WiFi.begin(config.wifiName, config.wifiPass);
+  // Connect to Wifi to send temperature data
+  WiFi.begin(config.wifiName, config.wifiPass);
   while (WiFi.status() != WL_CONNECTED) {
     // enable built in led
     doubleBlink(100);
@@ -118,6 +118,13 @@ void loop() {
   // polling interval
   delay(config.pollingInterval);
 
+  // upload temperature data to server
+  uploadData();
+
+}
+
+void uploadData() {
+
   // variable to store temperature and humidity event
   sensors_event_t event;
 
@@ -128,19 +135,13 @@ void loop() {
 
   // get humidity event
   dht.humidity().getEvent(&event);
-  float humid = event.relative_humidity;
-  Serial.println(humid);
+  float humidity = event.relative_humidity;
+  Serial.println(humidity);
 
   // get soil moisture
-  int soil = readSoilSensor();
-  Serial.println(soil);
-
-  // upload temperature data to server
-  uploadData(temperature, humid, float(soil));
-
-}
-
-void uploadData(float temperature, float humidity, float soilMoisture) {
+  int soilMoisture = readSoilSensor();
+  Serial.println(soilMoisture);
+  
   RtcDateTime now = rtc.GetDateTime();
   String strRecordedAt = formatIso8601(now);
 
