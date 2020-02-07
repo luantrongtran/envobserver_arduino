@@ -38,6 +38,8 @@ struct config {
 
   // This is the url of the API server
   String apiServer;
+
+  String timeOffset;
 };
 typedef struct config Config;
 
@@ -47,8 +49,8 @@ typedef struct config Config;
 
 #define DEFAULT_DEVICE_NAME "UNKNOWN"
 
-#define DEFAULT_WIFI_NAME "ANHDTH"
-#define DEFAULT_WIFI_PASS "hienhong123"
+#define DEFAULT_WIFI_NAME "TrongUyen"
+#define DEFAULT_WIFI_PASS "1943LamSon"
  
 #define DHTPIN D3
 #define DHTTYPE DHT11
@@ -57,10 +59,12 @@ typedef struct config Config;
 
 // how often send data to server, in ms
 #define DEFAULT_POLLING_INTERVAL 5000
-#define DEFAULT_API_SERVER "192.168.1.102:3000"
+#define DEFAULT_API_SERVER "192.168.1.2:3000"
 //#define DEFAULT_API_SERVER "192.168.1.42"
 
 #define WIFI_LED_PIN 2
+
+#define DEFAULT_TIME_OFFSET "+10:00"
 
 /*
  * Glbal varibles 
@@ -73,9 +77,9 @@ String deviceId = "1";
 RtcDS3231<TwoWire> rtc(Wire);
 
 void setup() {
+  Serial.println('Starting ...');
   // put your setup code here, to run once:
   loadConfig();
-
   Serial.begin(115200);
 
   // enable Temperature sensor
@@ -96,11 +100,12 @@ void setup() {
   digitalWrite(WIFI_LED_PIN, HIGH);
 
   // Connect to Wifi
-  WiFi.begin(config.wifiName, config.wifiPass);
+//  WiFi.begin(config.wifiName, config.wifiPass);
+WiFi.begin(config.wifiName, config.wifiPass);
   while (WiFi.status() != WL_CONNECTED) {
     // enable built in led
     doubleBlink(100);
-    delay(500);
+    delay(1500);
   }
 
   // after successfully wifi-connected
@@ -140,7 +145,7 @@ void uploadData(float temperature, float humidity, float soilMoisture) {
   String strRecordedAt = formatIso8601(now);
 
   DynamicJsonDocument doc(1024);
-  doc["id"] = deviceId;
+  doc["deviceId"] = deviceId;
   JsonObject data  = doc.createNestedObject("data");
   data["temperature"] = temperature;
   data["humidity"] = humidity;
@@ -155,12 +160,16 @@ void uploadData(float temperature, float humidity, float soilMoisture) {
 }
 
 void loadConfig() {
+  Serial.println("Loading config...");
   // Load default configurations
   config.deviceName = DEFAULT_DEVICE_NAME;
   config.wifiName = DEFAULT_WIFI_NAME;
   config.wifiPass = DEFAULT_WIFI_PASS;
   config.pollingInterval = DEFAULT_POLLING_INTERVAL;
   config.apiServer = DEFAULT_API_SERVER;
+
+  config.timeOffset = DEFAULT_TIME_OFFSET;
+
 }
 
 void post(String json) {
@@ -231,7 +240,7 @@ String formatIso8601(RtcDateTime date) {
   String day ;
   day= date.Day();
   if (date.Day() < 10) {
-    day = "0" + date.Day();
+    day = "0" + day;
   }
   
   String hour ;
@@ -264,6 +273,8 @@ String formatIso8601(RtcDateTime date) {
   str += minute;
   str += ":";
   str += second;
-  
+
+  str += config.timeOffset;
+
   return str;
 }
