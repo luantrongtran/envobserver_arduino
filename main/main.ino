@@ -3,6 +3,7 @@
 #include <DHT_U.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
+#include <ESP8266WebServer.h>
 
 #include <Wire.h>
 #include <RtcDS3231.h>
@@ -10,7 +11,7 @@
 /*
  * Method Declarations
  */
-void post(String);
+void post(String, String);
 void blink(int);
 void doubleBlink(int);
 void uploadData();
@@ -18,7 +19,9 @@ String formatIso8601(RtcDateTime);
 void loadConfig();
 void tripleBlink(int);
 int readSoilSensor();
+void setupesp8266AccessPoint();
 
+void setupEsp8266Client();
 /**
  * struct
  */
@@ -59,12 +62,26 @@ typedef struct config Config;
 
 // how often send data to server, in ms
 #define DEFAULT_POLLING_INTERVAL 5000
-#define DEFAULT_API_SERVER "192.168.1.2:3000"
+#define DEFAULT_API_SERVER "192.168.1.7:3000"
+//#define DEFAULT_POLLING_INTERVAL 60000
+//#define DEFAULT_API_SERVER "54.254.164.155"
+
 //#define DEFAULT_API_SERVER "192.168.1.42"
 
 #define WIFI_LED_PIN 2
 
-#define DEFAULT_TIME_OFFSET "+10:00"
+#define DEFAULT_TIME_OFFSET "+07:00"
+
+/*
+ * Rest Server's wifi name and password
+ */
+#define HTTP_REST_PORT 80
+#define WIFI_RETRY_DELAY 500
+#define MAX_WIFI_INIT_RETRY 50
+const char* ACCESS_POINT_SSID = "YOUR_SSID";
+const char* ACCESS_POINT_PASS = "YOUR_PASSWD";
+
+ESP8266WebServer http_rest_server(HTTP_REST_PORT);
 
 /*
  * Glbal varibles 
@@ -100,18 +117,8 @@ void setup() {
   pinMode(WIFI_LED_PIN, OUTPUT);
   digitalWrite(WIFI_LED_PIN, HIGH);
 
-  // Connect to Wifi to send temperature data
-  WiFi.begin(config.wifiName, config.wifiPass);
-  while (WiFi.status() != WL_CONNECTED) {
-    // enable built in led
-    doubleBlink(100);
-    delay(1500);
-  }
-
-  // after successfully wifi-connected
-  digitalWrite(WIFI_LED_PIN, LOW);
-
-  Serial.println("connected");
+  setupEsp8266Client();
+  setupesp8266AccessPoint();
 }
 
 void loop() {
@@ -121,44 +128,11 @@ void loop() {
   // upload temperature data to server
   uploadData();
 
+//  http_rest_server.handleClient();
+//  blink(500);
 }
 
-void uploadData() {
 
-  // variable to store temperature and humidity event
-  sensors_event_t event;
-
-  // get temperature
-  dht.temperature().getEvent(&event);
-  float temperature = event.temperature;
-  Serial.println(temperature);
-
-  // get humidity event
-  dht.humidity().getEvent(&event);
-  float humidity = event.relative_humidity;
-  Serial.println(humidity);
-
-  // get soil moisture
-  int soilMoisture = readSoilSensor();
-  Serial.println(soilMoisture);
-  
-  RtcDateTime now = rtc.GetDateTime();
-  String strRecordedAt = formatIso8601(now);
-
-  DynamicJsonDocument doc(1024);
-  doc["deviceId"] = deviceId;
-  JsonObject data  = doc.createNestedObject("data");
-  data["temperature"] = temperature;
-  data["humidity"] = humidity;
-  data["soil_moisture"] = soilMoisture;
-  data["recorded_at"] = strRecordedAt;
-
-  String body;
-  serializeJson(doc, body);
-  
-  Serial.println(body);
-  post(body);
-}
 
 void loadConfig() {
   Serial.println("Loading config...");
@@ -173,109 +147,12 @@ void loadConfig() {
 
 }
 
-void post(String json) {
-  WiFiClient client;
-  HTTPClient http;
-  
-//  http.begin(client, DEFAULT_API_SERVER "/envobserver");
-  String apiServer = "http://";
-  apiServer += config.apiServer;
-  apiServer += "/envobservers/uploaddata";
-  http.begin(client, apiServer); //HTTP
-  http.addHeader("Content-Type", "application/json");
 
-  Serial.println(F("Sending request ..."));
-  int httpCode = http.POST(json);
-  const String& payload = http.getString();
-  if (httpCode == HTTP_CODE_OK) {
-      blink(1000);
-  } else {
-    // triple blink if it failed to send data to API server
-    tripleBlink(200);
-  }
-}
 
 int readSoilSensor() {
   int sensorValue = analogRead(ANALOG_SENSOR_PIN);
   return sensorValue;
 }
 
-/*
- * Blink led on WIFI_LED_PIN
- */
-void blink(int interval) {
-  digitalWrite(WIFI_LED_PIN, LOW);
-  delay(interval);
-  digitalWrite(WIFI_LED_PIN, HIGH);
-}
 
-/*
- * Double blink led on WIFI_LED_PIN
- */
-void doubleBlink(int interval) {
-  blink(interval);
-  delay(interval);
-  blink(interval);
-}
 
-void tripleBlink(int interval) {
-  blink(interval);
-  delay(interval);
-  blink(interval);
-  delay(interval);
-  blink(interval);
-}
-
-/**
- * Format a date into ISO8601 string
- */
-String formatIso8601(RtcDateTime date) {
-  String month = "";
-  month = date.Month();
-  Serial.println(month);
-//  Serial.println("Month: " + date.Month());
-  if (date.Month() < 10) {
-    month = "0" + month;
-  }
-  
-  String day ;
-  day= date.Day();
-  if (date.Day() < 10) {
-    day = "0" + day;
-  }
-  
-  String hour ;
-  hour = date.Hour();
-  if (date.Hour() < 10) {
-    hour = "0" + hour;
-  }
-
-  String minute;
-  minute = date.Minute();
-  if(date.Minute() < 10) {
-    minute = "0" + minute;
-  }
-
-  String second;
-  second = date.Second();
-  if (date.Second() < 10) {
-    second = "0" + second;
-  }
-
-  String str;
-  str = date.Year() ;
-  str += "-";
-  str += month;
-  str += "-";
-  str += day;
-  str += "T";
-  str += hour;
-  str += ":";
-  str += minute;
-  str += ":";
-  str += second;
-
-  str += config.timeOffset;
-
-  return str;
-}
