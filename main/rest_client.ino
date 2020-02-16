@@ -1,5 +1,4 @@
 
-
 void setupEsp8266Client(){
   // Connect to Internet to send temperature data
   WiFi.begin(config.wifiName, config.wifiPass);

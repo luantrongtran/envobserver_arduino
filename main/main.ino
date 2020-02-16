@@ -8,6 +8,8 @@
 #include <Wire.h>
 #include <RtcDS3231.h>
 #include <ArduinoJson.h>
+
+#include "FS.h"
 /*
  * Method Declarations
  */
@@ -16,9 +18,11 @@ void blink(int);
 void doubleBlink(int);
 void uploadData();
 String formatIso8601(RtcDateTime);
-void loadConfig();
+void loadDefaultConfig();
 void tripleBlink(int);
 int readSoilSensor();
+
+void configRouting();
 void setupesp8266AccessPoint();
 
 void setupEsp8266Client();
@@ -62,7 +66,7 @@ typedef struct config Config;
 
 // how often send data to server, in ms
 #define DEFAULT_POLLING_INTERVAL 5000
-#define DEFAULT_API_SERVER "192.168.1.7:3000"
+#define DEFAULT_API_SERVER "192.168.1.6:3000"
 //#define DEFAULT_POLLING_INTERVAL 60000
 //#define DEFAULT_API_SERVER "54.254.164.155"
 
@@ -78,8 +82,8 @@ typedef struct config Config;
 #define HTTP_REST_PORT 80
 #define WIFI_RETRY_DELAY 500
 #define MAX_WIFI_INIT_RETRY 50
-const char* ACCESS_POINT_SSID = "YOUR_SSID";
-const char* ACCESS_POINT_PASS = "YOUR_PASSWD";
+const char* ACCESS_POINT_SSID = "ENVOBSERVER_NOT_REGISTERED";
+const char* ACCESS_POINT_PASS = "00000000";
 
 ESP8266WebServer http_rest_server(HTTP_REST_PORT);
 
@@ -96,8 +100,10 @@ RtcDS3231<TwoWire> rtc(Wire);
 void setup() {
   Serial.println('Starting ...');
   // put your setup code here, to run once:
-  loadConfig();
+  loadDefaultConfig();
   Serial.begin(115200);
+
+  setupConfigFile();
 
   // enable Temperature sensor
   dht.begin();
@@ -117,8 +123,9 @@ void setup() {
   pinMode(WIFI_LED_PIN, OUTPUT);
   digitalWrite(WIFI_LED_PIN, HIGH);
 
-  setupEsp8266Client();
+//  setupEsp8266Client();
   setupesp8266AccessPoint();
+
 }
 
 void loop() {
@@ -126,25 +133,10 @@ void loop() {
   delay(config.pollingInterval);
 
   // upload temperature data to server
-  uploadData();
+//  uploadData();
 
-//  http_rest_server.handleClient();
+  http_rest_server.handleClient();
 //  blink(500);
-}
-
-
-
-void loadConfig() {
-  Serial.println("Loading config...");
-  // Load default configurations
-  config.deviceName = DEFAULT_DEVICE_NAME;
-  config.wifiName = DEFAULT_WIFI_NAME;
-  config.wifiPass = DEFAULT_WIFI_PASS;
-  config.pollingInterval = DEFAULT_POLLING_INTERVAL;
-  config.apiServer = DEFAULT_API_SERVER;
-
-  config.timeOffset = DEFAULT_TIME_OFFSET;
-
 }
 
 
