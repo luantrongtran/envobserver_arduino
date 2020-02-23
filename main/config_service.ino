@@ -1,8 +1,8 @@
-const int CONFIG_SIZE = 200;
-
 void setupConfigFile() {
+  // 1st load default config
+  loadDefaultConfig();
+    
   Serial.println("Mounting FS...");
-
   if (!SPIFFS.begin()) {
     Serial.println("Failed to mount file system");
     return;
@@ -15,12 +15,30 @@ void setupConfigFile() {
   bool b= loadConfigFile();
   Serial.print("Loading config returns: ");
   Serial.println(b);
+  printConfig();
 }
 
-bool saveConfig(Config config) {
+void printConfig() {
+  Serial.println(config.wifiName);
+  Serial.println(config.wifiPass);
+  Serial.println(config.deviceId);
+}
+
+bool saveConfig() {
   StaticJsonDocument<CONFIG_SIZE> doc;
-  doc["wifiName"] = config.wifiName;
-  doc["wifiPass"] = "12345";
+  doc = serializeConfig(config);
+
+  if (isEmptyOrNull(config.wifiName) == true) {
+    doc["wifiName"] = config.wifiName;
+  }
+
+  if (isEmptyOrNull(config.wifiPass) == true) {
+    doc["wifiPass"] = config.wifiPass;
+  }
+
+  if (isEmptyOrNull(config.deviceId)) {
+    doc["deviceId"] = config.deviceId;
+  }
 
   File configFile = SPIFFS.open("/config.json", "w");
   if (!configFile) {
@@ -53,31 +71,37 @@ bool loadConfigFile() {
   // use configFile.readString instead.
   configFile.readBytes(buf.get(), size);
 
-  StaticJsonDocument<200> doc;
+  StaticJsonDocument<CONFIG_SIZE> doc;
   auto error = deserializeJson(doc, buf.get());
   if (error) {
     Serial.println("Failed to parse config file");
     return false;
   }
 
-  const char* wifiName = doc["wifiName"];
-  const char* wifiPass = doc["wifiPass"];
+  // Load config into the global variable config
+  if (doc.containsKey("deviceId") == true) {
+    const char* deviceId = doc["deviceId"];
+    config.deviceId = String(deviceId);
+  }
+  
+  if(doc.containsKey("wifiName") == true) {
+    const char* wifiName = doc["wifiName"];
+    config.wifiName = String(wifiName);  
+  }
 
-  // Real world application would store these values in some variables for
-  // later use.
+  if (doc.containsKey("wifiPass") == true) {
+    const char* wifiPass = doc["wifiPass"];
+    config.wifiPass = String(wifiPass);
+  }
 
-  Serial.print("Loaded serverName: ");
-  Serial.println(wifiName);
-  Serial.print("Loaded accessToken: ");
-  Serial.println(wifiPass);
   return true;
 }
 
 StaticJsonDocument<CONFIG_SIZE> serializeConfig(Config config_) {
   StaticJsonDocument<CONFIG_SIZE> doc;
-  
-  if (config_.wifiName != NULL) {
-    doc["wifiName"] = config_.wifiName;
+
+  if (isEmptyOrNull(config.wifiName) == true) {
+    doc["wifiName"] = config.wifiName;
   }
 
   if (config_.wifiPass != NULL) {
@@ -97,6 +121,7 @@ void loadDefaultConfig() {
   config.apiServer = DEFAULT_API_SERVER;
 
   config.timeOffset = DEFAULT_TIME_OFFSET;
-
 }
+
+
 

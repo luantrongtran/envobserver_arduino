@@ -81,3 +81,15 @@ void doubleBlink(int interval) {
   delay(interval);
   blink(interval);
 }
+
+bool isEmptyOrNull(String str) {
+  if (str == NULL) {
+    return false;
+  }
+
+  if (str == "") {
+    return false;
+  }
+
+  return true;
+}

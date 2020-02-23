@@ -1,16 +1,44 @@
 
 void setupEsp8266Client(){
   // Connect to Internet to send temperature data
+  int retry = 0;
   WiFi.begin(config.wifiName, config.wifiPass);
   while (WiFi.status() != WL_CONNECTED) {
     // enable built in led
     doubleBlink(100);
+
+    if (retry == WIFI_CONNECTION_RETRY) {
+      break;
+    }
+    
     delay(1500);
   }
 
   // after successfully wifi-connected
   digitalWrite(WIFI_LED_PIN, LOW);
   Serial.println("connected");
+}
+
+void activateDeviceOnline(String ownerId) {
+  String apiServer = "";//"http://";
+  apiServer += config.apiServer;
+  apiServer += "/envobservers";
+  Serial.println(apiServer);
+
+  String payload = post("", apiServer);
+  char temp[200];
+  payload.toCharArray(temp, sizeof(temp));
+  StaticJsonDocument<CONFIG_SIZE> doc;
+  auto error = deserializeJson(doc, temp);
+
+  if(error) {
+    Serial.println("Activate API: Failed to parse returned payload");
+    return;
+  }
+
+  String deviceId = doc["_id"];
+  config.deviceId = deviceId;
+  saveConfig();
 }
 
 /**
@@ -39,7 +67,7 @@ void uploadData() {
   String strRecordedAt = formatIso8601(now);
 
   DynamicJsonDocument doc(1024);
-  doc["deviceId"] = deviceId;
+  doc["deviceId"] = config.deviceId;
   JsonObject data  = doc.createNestedObject("data");
   data["temperature"] = temperature;
   data["humidity"] = humidity;
@@ -51,7 +79,7 @@ void uploadData() {
   
   Serial.println(body);
 
-  String apiServer = "http://";
+  String apiServer = "";//"http://";
   apiServer += config.apiServer;
   apiServer += "/envobservers/uploaddata";
   Serial.println(apiServer);
@@ -59,12 +87,14 @@ void uploadData() {
   post(body, apiServer);
 }
 
+
+
 /**
  * Send a json to backend
  * 
  * @apiServer is the url of the backend
  */ 
-void post(String json, String apiServer) {
+String post(String json, String apiServer) {
   WiFiClient client;
   HTTPClient http;
   
@@ -79,8 +109,10 @@ void post(String json, String apiServer) {
   Serial.println(httpCode);
   if (httpCode == HTTP_CODE_OK) {
       blink(1000);
+      return payload;
   } else {
     // triple blink if it failed to send data to API server
     tripleBlink(200);
+    return "";
   }
 }
