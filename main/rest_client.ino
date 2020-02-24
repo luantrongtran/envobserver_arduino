@@ -10,7 +10,8 @@ void setupEsp8266Client(){
     if (retry == WIFI_CONNECTION_RETRY) {
       break;
     }
-    
+
+    retry++;
     delay(1500);
   }
 
@@ -38,6 +39,7 @@ void activateDeviceOnline(String ownerId) {
 
   String deviceId = doc["_id"];
   config.deviceId = deviceId;
+  config.userId = ownerId;
   saveConfig();
 }
 

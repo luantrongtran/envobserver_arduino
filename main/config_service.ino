@@ -25,6 +25,7 @@ void printConfig() {
 }
 
 bool saveConfig() {
+  Serial.println("Saving new config");
   StaticJsonDocument<CONFIG_SIZE> doc;
   doc = serializeConfig(config);
 
@@ -47,6 +48,8 @@ bool saveConfig() {
   }
 
   serializeJson(doc, configFile);
+
+  printConfig();
   return true;
 }
 
@@ -122,6 +125,3 @@ void loadDefaultConfig() {
 
   config.timeOffset = DEFAULT_TIME_OFFSET;
 }
-
-
-

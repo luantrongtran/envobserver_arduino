@@ -33,6 +33,7 @@ void activateDevice() {
 
   String paramNameOwnerId = "ownerId";
 
+  sendCorsHeader();
   if(http_rest_server.hasArg(paramNameOwnerId) == false) {
     http_rest_server.send(400, "text/plain", "Missing userId who owns this device");
   }
@@ -47,23 +48,35 @@ void activateDevice() {
  */
 void updateWifi() {
   Serial.println("Update wifi handler");
+  sendCorsHeader();
+
   String paramWifiName = "ssid";
   String paramWifiPass = "pass";
 
-  String errMsg = "No ssid provided";
+  String errMsg = "{\"msg\": \"Wifi SSID (name) must not be empty\"}";
   String wifiName = "";
   String wifiPass = "";
   if(http_rest_server.hasArg(paramWifiName) == false) {
-    wifiName = http_rest_server.arg(paramWifiName);
-    http_rest_server.send(400, "text/plain", errMsg);
+    Serial.println(errMsg);
+    http_rest_server.send(400, "application/json", errMsg);
     return;
+  } else {
+    wifiName = http_rest_server.arg(paramWifiName);
+    if(wifiName == "") {
+      http_rest_server.send(400, "application/json", errMsg);  
+    }
   }
 
-  errMsg = "No wifi password provided";
+  errMsg = "{\"msg\": \"Wifi Password must not be empty\"}";
   if(http_rest_server.hasArg(paramWifiPass) == false) {
-    wifiPass = http_rest_server.arg(paramWifiPass);
-    http_rest_server.send(400, "text/plain", errMsg);
+    Serial.println(errMsg);
+    http_rest_server.send(400, "application/json", errMsg);
     return;
+  } else {
+    wifiPass = http_rest_server.arg(paramWifiPass);
+    if(wifiPass == "") {
+      http_rest_server.send(400, "application/json", errMsg);
+    }
   }
 
   config.wifiName = wifiName;
@@ -72,13 +85,11 @@ void updateWifi() {
   bool b = saveConfig();
 
   if (b == true) {
-    String msg = "Wifi updated, need to restart the device";
-    msg += wifiName;
-    http_rest_server.send(200, "text/plain", msg);
+    String msg = "{\"msg\": \"Wifi updated, need to restart the device\"}";
+    http_rest_server.send(200, "application/json", msg);
   } else {
-    String msg = "failed to update wifi";
-    msg += wifiName;
-    http_rest_server.send(500, "text/plain", msg);
+    String msg = "{\"msg\": \"failed to update wifi\"}";
+    http_rest_server.send(500, "application/json", msg);
   }
 }
 
@@ -103,5 +114,14 @@ void showInfo() {
   
   String temp;
   serializeJson(doc, temp);
+  sendCorsHeader();
   http_rest_server.send(200, "application/json", temp);
+}
+
+/**
+ * This is to send headers for CORS
+ */
+void sendCorsHeader() {
+  http_rest_server.sendHeader("Access-Control-Allow-Origin", "*");
+  http_rest_server.sendHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
 }

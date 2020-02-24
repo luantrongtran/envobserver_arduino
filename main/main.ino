@@ -26,7 +26,7 @@
 #define ANALOG_SENSOR_PIN A0
 
 // how often send data to server, in ms
-#define DEFAULT_POLLING_INTERVAL 60000
+#define DEFAULT_POLLING_INTERVAL 10000
 #define DEFAULT_API_SERVER "http://192.168.1.7:3000"
 //#define DEFAULT_POLLING_INTERVAL 60000
 //#define DEFAULT_API_SERVER "http://54.254.164.155"
@@ -54,6 +54,8 @@ const int WIFI_CONNECTION_RETRY = 5;
  */
 
 struct config {
+  // the owner
+  String userId;
   String deviceId;
   String deviceName;
   
@@ -148,6 +150,10 @@ void loop() {
   unsigned long now = millis();
   unsigned long intervalSinceLastSend = now - lastTimeUploadData;
 
+  if (WiFi.status() != WL_CONNECTED) {
+//    doubleBlink(100);
+  }
+
   // upload temperature data to server
   if(intervalSinceLastSend >= config.pollingInterval) {
     if (WiFi.status() == WL_CONNECTED) {
@@ -155,8 +161,8 @@ void loop() {
         uploadData();
       }
     }
-    Serial.println(intervalSinceLastSend);
-    Serial.println(config.pollingInterval);
+//    Serial.println(intervalSinceLastSend);
+//    Serial.println(config.pollingInterval);
     lastTimeUploadData = now;
   }
 
