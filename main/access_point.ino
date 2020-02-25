@@ -82,7 +82,17 @@ void updateWifi() {
   config.wifiName = wifiName;
   config.wifiPass = wifiPass;
 
+  /* 
+   *  try to connect to the new wifi settings.
+   *  THere is a problem when updating new wifi settings. If the wifi ssid is the same, 
+   *  and the password is new, it won't update the password. A working around is to
+   *  connect to a fake network before connecting to the new one.
+   */
+  connectWifi("$#@#$#@DS", "#&&#*#");
+  connectWifi(config.wifiName, config.wifiPass);
+
   bool b = saveConfig();
+
 
   if (b == true) {
     String msg = "{\"msg\": \"Wifi updated, need to restart the device\"}";

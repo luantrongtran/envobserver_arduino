@@ -1,8 +1,12 @@
-
-void setupEsp8266Client(){
-  // Connect to Internet to send temperature data
+/**
+ * This is to connect the device to Internet
+ */
+void connectWifi(String ssid, String password)  {
+  Serial.println("Connecting wifi");
   int retry = 0;
-  WiFi.begin(config.wifiName, config.wifiPass);
+
+  WiFi.begin(ssid, password);
+
   while (WiFi.status() != WL_CONNECTED) {
     // enable built in led
     doubleBlink(100);
@@ -15,9 +19,34 @@ void setupEsp8266Client(){
     delay(1500);
   }
 
+  if(WiFi.status() == WL_CONNECTED) {
+    Serial.println("Wifi connected");
+  }
+
   // after successfully wifi-connected
   digitalWrite(WIFI_LED_PIN, LOW);
-  Serial.println("connected");
+}
+
+void setupEsp8266Client(){
+  // Connect to Internet to send temperature data
+  connectWifi(config.wifiName, config.wifiPass);
+  
+//  WiFi.begin(config.wifiName, config.wifiPass);
+//  while (WiFi.status() != WL_CONNECTED) {
+//    // enable built in led
+//    doubleBlink(100);
+//
+//    if (retry == WIFI_CONNECTION_RETRY) {
+//      break;
+//    }
+//
+//    retry++;
+//    delay(1500);
+//  }
+//
+//  // after successfully wifi-connected
+//  digitalWrite(WIFI_LED_PIN, LOW);
+//  Serial.println("connected");
 }
 
 void activateDeviceOnline(String ownerId) {
