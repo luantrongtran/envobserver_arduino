@@ -26,8 +26,8 @@
 
 #define DEFAULT_DEVICE_NAME "UNKNOWN"
 
-#define DEFAULT_WIFI_NAME "TrongUyen"
-#define DEFAULT_WIFI_PASS "1943LamSon"
+#define DEFAULT_WIFI_NAME "1"
+#define DEFAULT_WIFI_PASS "1"
  
 #define DHTPIN D3
 #define DHTTYPE DHT11
@@ -36,9 +36,9 @@
 
 // how often send data to server, in ms
 #define DEFAULT_POLLING_INTERVAL 10000
-#define DEFAULT_API_SERVER "http://192.168.1.7:3000"
+//#define DEFAULT_API_SERVER "http://192.168.1.7:3000"
 //#define DEFAULT_POLLING_INTERVAL 60000
-//#define DEFAULT_API_SERVER "http://54.254.164.155"
+#define DEFAULT_API_SERVER "http://54.254.164.155"
 
 //#define DEFAULT_API_SERVER "192.168.1.42"
 

@@ -7,6 +7,7 @@ void configRouting() {
   http_rest_server.on("/", showInfo);
   http_rest_server.on("/activate", activateDevice);
   http_rest_server.on("/wifi", updateWifi);
+  http_rest_server.on("/factoryReset", factoryReset);
 }
 
 /**
@@ -26,21 +27,32 @@ void setupesp8266AccessPoint() {
  * This is to activate the device
  */
 void activateDevice() {
-  if (isActivated() == true) {
-    http_rest_server.send(400, "text/plain", "failed: device already activated");
-    return;
-  }
+  sendCorsHeader();
+  
+//  if (isActivated() == true) {
+//    String errMsg = "{\"msg\": \"failed: device already activated\"}";
+//    http_rest_server.send(200, "application/json", errMsg);
+//    return;
+//  }
 
   String paramNameOwnerId = "ownerId";
-
-  sendCorsHeader();
+  
   if(http_rest_server.hasArg(paramNameOwnerId) == false) {
-    http_rest_server.send(400, "text/plain", "Missing userId who owns this device");
+    String errMsg = "{\"msg\": \"Missing userId who owns this device\"}";
+    http_rest_server.send(200, "application/json", errMsg);
+    return;
   }
   
   String ownerId = http_rest_server.arg(paramNameOwnerId);
-  activateDeviceOnline(ownerId);
-  http_rest_server.send(200, "text/plain", "success");
+  boolean isSuccessful = activateDeviceOnline(ownerId);
+  if (isSuccessful == true) {
+    http_rest_server.send(201, "application/json", "{\"msg\": \"Device activated successfully\"}");
+    return;
+  } else {
+    String errMsg = "{\"msg\": \"Failed to actiavte the device\"}";
+    http_rest_server.send(200, "application/json", errMsg);
+    return;
+  }
 }
 
 /**
@@ -58,24 +70,26 @@ void updateWifi() {
   String wifiPass = "";
   if(http_rest_server.hasArg(paramWifiName) == false) {
     Serial.println(errMsg);
-    http_rest_server.send(400, "application/json", errMsg);
+    http_rest_server.send(200, "application/json", errMsg);
     return;
   } else {
     wifiName = http_rest_server.arg(paramWifiName);
     if(wifiName == "") {
-      http_rest_server.send(400, "application/json", errMsg);  
+      http_rest_server.send(200, "application/json", errMsg);  
+      return;
     }
   }
 
   errMsg = "{\"msg\": \"Wifi Password must not be empty\"}";
   if(http_rest_server.hasArg(paramWifiPass) == false) {
     Serial.println(errMsg);
-    http_rest_server.send(400, "application/json", errMsg);
+    http_rest_server.send(200, "application/json", errMsg);
     return;
   } else {
     wifiPass = http_rest_server.arg(paramWifiPass);
     if(wifiPass == "") {
-      http_rest_server.send(400, "application/json", errMsg);
+      http_rest_server.send(200, "application/json", errMsg);
+      return;
     }
   }
 
@@ -99,7 +113,7 @@ void updateWifi() {
     http_rest_server.send(200, "application/json", msg);
   } else {
     String msg = "{\"msg\": \"failed to update wifi\"}";
-    http_rest_server.send(500, "application/json", msg);
+    http_rest_server.send(200, "application/json", msg);
   }
 }
 
@@ -128,10 +142,16 @@ void showInfo() {
   http_rest_server.send(200, "application/json", temp);
 }
 
+void factoryReset() {
+  removeConfigFile();
+  http_rest_server.send(201, "application/json", "");
+}
+
 /**
  * This is to send headers for CORS
  */
 void sendCorsHeader() {
   http_rest_server.sendHeader("Access-Control-Allow-Origin", "*");
-  http_rest_server.sendHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  http_rest_server.sendHeader("Access-Control-Allow-Headers", "*");
+  http_rest_server.sendHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
 }

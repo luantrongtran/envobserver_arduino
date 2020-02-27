@@ -20,7 +20,7 @@ void setupConfigFile() {
 
 void printConfig() {
   Serial.println(config.wifiName);
-  Serial.println(config.wifiPass);
+  //Serial.println(config.wifiPass);
   Serial.println(config.deviceId);
 }
 
@@ -124,4 +124,13 @@ void loadDefaultConfig() {
   config.apiServer = DEFAULT_API_SERVER;
 
   config.timeOffset = DEFAULT_TIME_OFFSET;
+}
+
+void removeConfigFile() {
+  Serial.println("Removing config file");
+  String filePath = "/config.json";
+  if (SPIFFS.exists(filePath) == false) {
+    return;
+  }
+  SPIFFS.remove(filePath);
 }

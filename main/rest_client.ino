@@ -19,6 +19,8 @@ void connectWifi(String ssid, String password)  {
     delay(1500);
   }
 
+  Serial.println(WiFi.status());
+
   if(WiFi.status() == WL_CONNECTED) {
     Serial.println("Wifi connected");
   }
@@ -49,13 +51,21 @@ void setupEsp8266Client(){
 //  Serial.println("connected");
 }
 
-void activateDeviceOnline(String ownerId) {
+bool activateDeviceOnline(String ownerId) {
   String apiServer = "";//"http://";
   apiServer += config.apiServer;
   apiServer += "/envobservers";
   Serial.println(apiServer);
 
-  String payload = post("", apiServer);
+  String reqBody = "{\"userId\":\"";
+  reqBody += ownerId;
+  reqBody += "\"}";
+  String payload = post(reqBody, apiServer);
+  Serial.println(payload);
+  if (payload == "-1") {
+    "Failed to connect to backend server";
+    return false;  
+  }
   char temp[200];
   payload.toCharArray(temp, sizeof(temp));
   StaticJsonDocument<CONFIG_SIZE> doc;
@@ -63,13 +73,15 @@ void activateDeviceOnline(String ownerId) {
 
   if(error) {
     Serial.println("Activate API: Failed to parse returned payload");
-    return;
+    return false;
   }
 
   String deviceId = doc["_id"];
   config.deviceId = deviceId;
   config.userId = ownerId;
   saveConfig();
+
+  return true;
 }
 
 /**
@@ -144,6 +156,7 @@ String post(String json, String apiServer) {
   } else {
     // triple blink if it failed to send data to API server
     tripleBlink(200);
-    return "";
+    Serial.println(payload);
+    return "-1";
   }
 }
