@@ -134,3 +134,11 @@ void removeConfigFile() {
   }
   SPIFFS.remove(filePath);
 }
+
+bool isActivated() {
+  if (config.deviceId != NULL && config.deviceId != "") {
+    return true;
+  }
+
+  return false;
+}

@@ -32,23 +32,6 @@ void connectWifi(String ssid, String password)  {
 void setupEsp8266Client(){
   // Connect to Internet to send temperature data
   connectWifi(config.wifiName, config.wifiPass);
-  
-//  WiFi.begin(config.wifiName, config.wifiPass);
-//  while (WiFi.status() != WL_CONNECTED) {
-//    // enable built in led
-//    doubleBlink(100);
-//
-//    if (retry == WIFI_CONNECTION_RETRY) {
-//      break;
-//    }
-//
-//    retry++;
-//    delay(1500);
-//  }
-//
-//  // after successfully wifi-connected
-//  digitalWrite(WIFI_LED_PIN, LOW);
-//  Serial.println("connected");
 }
 
 bool activateDeviceOnline(String ownerId) {
@@ -107,6 +90,9 @@ void uploadData() {
 //  Serial.println(soilMoisture);
   
   RtcDateTime now = rtc.GetDateTime();
+    printDateTime(now);
+    Serial.println();
+  Serial.print( now.Epoch32Time() ) ;
   String strRecordedAt = formatIso8601(now);
 
   DynamicJsonDocument doc(1024);
@@ -151,12 +137,32 @@ String post(String json, String apiServer) {
   const String& payload = http.getString();
   Serial.println(httpCode);
   if (httpCode == HTTP_CODE_OK) {
-      blink(1000);
       return payload;
   } else {
-    // triple blink if it failed to send data to API server
-    tripleBlink(200);
     Serial.println(payload);
     return "-1";
   }
+}
+
+int readSoilSensor() {
+  int sensorValue = analogRead(ANALOG_SENSOR_PIN);
+  return sensorValue;
+}
+
+#define countof(a) (sizeof(a) / sizeof(a[0]))
+
+void printDateTime(const RtcDateTime& dt)
+{
+    char datestring[20];
+
+    snprintf_P(datestring, 
+            countof(datestring),
+            PSTR("%02u/%02u/%04u %02u:%02u:%02u"),
+            dt.Month(),
+            dt.Day(),
+            dt.Year(),
+            dt.Hour(),
+            dt.Minute(),
+            dt.Second() );
+    Serial.print(datestring);
 }

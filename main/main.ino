@@ -30,7 +30,8 @@
 #define DEFAULT_WIFI_PASS "1"
  
 #define DHTPIN D3
-#define DHTTYPE DHT11
+//#define DHTTYPE DHT11
+#define DHTTYPE DHT22
 
 #define ANALOG_SENSOR_PIN A0
 
@@ -103,6 +104,8 @@ void setupesp8266AccessPoint();
 void setupEsp8266Client();
 bool isEmptyOrNull(String str);
 
+void setupRtcModule();
+
 StaticJsonDocument<CONFIG_SIZE> serializeConfig(Config);
 
 // config_service;
@@ -128,20 +131,11 @@ void setup() {
   Serial.begin(115200);
 
   setupConfigFile();
+  
+  setupRtcModule();
 
   // enable Temperature sensor
   dht.begin();
-
-  // entable DS3231 - real time clock
-  rtc.Begin();
-  RtcDateTime compiled = RtcDateTime(__DATE__, __TIME__);
-  if (!rtc.IsDateTimeValid()) 
-  {
-      Serial.println("RTC lost confidence in the DateTime!");
-      rtc.SetDateTime(compiled);
-  }
-  rtc.Enable32kHzPin(false);
-  rtc.SetSquareWavePin(DS3231SquareWavePin_ModeNone);
 
   // Setup pin for LEDs
   pinMode(WIFI_LED_PIN, OUTPUT);
@@ -158,11 +152,7 @@ void loop() {
   unsigned long now = millis();
   unsigned long intervalSinceLastSend = now - lastTimeUploadData;
 
-  if (WiFi.status() != WL_CONNECTED) {
-//    doubleBlink(100);
-  }
-
-  // upload temperature data to server
+//   upload temperature data to server
   if(intervalSinceLastSend >= config.pollingInterval) {
     if (WiFi.status() == WL_CONNECTED) {
       if (isActivated() == true) {
@@ -174,19 +164,56 @@ void loop() {
     lastTimeUploadData = now;
   }
 
-}
-
-
-
-int readSoilSensor() {
-  int sensorValue = analogRead(ANALOG_SENSOR_PIN);
-  return sensorValue;
-}
-
-bool isActivated() {
-  if (config.deviceId != NULL && config.deviceId != "") {
-    return true;
+  if (WiFi.status() != WL_CONNECTED) {
+    doubleBlink(100);
+  } else {
+    blink(100);
   }
 
-  return false;
+  // delay 1s per loop
+  delay(1000);
+}
+
+void setupRtcModule() {
+  Serial.println("Setup RTC DS3231");
+  rtc.Begin();
+  RtcDateTime compiled = RtcDateTime(__DATE__, __TIME__);
+  if (!rtc.IsDateTimeValid()) 
+  {
+      if (rtc.LastError() != 0)
+      {
+          // we have a communications error
+          // see https://www.arduino.cc/en/Reference/WireEndTransmission for 
+          // what the number means
+          Serial.print("RTC communications error = ");
+          Serial.println(rtc.LastError());
+      } else {
+        Serial.println("RTC lost confidence in the DateTime!");
+        rtc.SetDateTime(compiled);
+      }
+
+      if (!rtc.GetIsRunning())
+      {
+          Serial.println("RTC was not actively running, starting now");
+          rtc.SetIsRunning(true);
+      }
+  }
+
+  RtcDateTime now = rtc.GetDateTime();
+  if (now < compiled) 
+  {
+      Serial.println("RTC is older than compile time!  (Updating DateTime)");
+      rtc.SetDateTime(compiled);
+  }
+  else if (now > compiled) 
+  {
+      Serial.println("RTC is newer than compile time. (this is expected)");
+  }
+  else if (now == compiled) 
+  {
+      Serial.println("RTC is the same as compile time! (not expected but all is fine)");
+  }
+
+  rtc.Enable32kHzPin(false);
+  rtc.SetSquareWavePin(DS3231SquareWavePin_ModeNone);
 }
