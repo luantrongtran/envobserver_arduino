@@ -29,11 +29,11 @@ void setupesp8266AccessPoint() {
 void activateDevice() {
   sendCorsHeader();
   
-//  if (isActivated() == true) {
-//    String errMsg = "{\"msg\": \"failed: device already activated\"}";
-//    http_rest_server.send(200, "application/json", errMsg);
-//    return;
-//  }
+  if (isActivated() == true) {
+    String errMsg = "{\"msg\": \"failed: device already activated\"}";
+    http_rest_server.send(200, "application/json", errMsg);
+    return;
+  }
 
   String paramNameOwnerId = "ownerId";
   
