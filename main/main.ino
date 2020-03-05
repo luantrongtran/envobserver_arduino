@@ -30,8 +30,8 @@
 #define DEFAULT_WIFI_PASS "1"
  
 #define DHTPIN D3
-//#define DHTTYPE DHT11
-#define DHTTYPE DHT22
+#define DHTTYPE DHT11
+//#define DHTTYPE DHT22
 
 #define ANALOG_SENSOR_PIN A0
 

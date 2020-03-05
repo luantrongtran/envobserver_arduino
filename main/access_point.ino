@@ -14,7 +14,8 @@ void configRouting() {
  * Setup Esp8266 as an Soft Access Point
  */
 void setupesp8266AccessPoint() {
-  WiFi.softAP(ACCESS_POINT_SSID, ACCESS_POINT_PASS);
+  String ssid = "ENVOBSERVER_" + config.deviceName;
+  WiFi.softAP(ssid, ACCESS_POINT_PASS);
   http_rest_server.begin();
   IPAddress myIP = WiFi.softAPIP();
   Serial.print("AP IP address: ");
