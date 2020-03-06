@@ -37,12 +37,23 @@ void setupEsp8266Client(){
 bool activateDeviceOnline(String ownerId) {
   String apiServer = "";//"http://";
   apiServer += config.apiServer;
-  apiServer += "/envobservers";
+  apiServer += "/envobservers/activate";
   Serial.println(apiServer);
 
-  String reqBody = "{\"userId\":\"";
-  reqBody += ownerId;
-  reqBody += "\"}";
+  StaticJsonDocument<CONFIG_SIZE> body;
+  body["userId"] = ownerId;
+  body["deviceName"] = config.deviceName;
+  
+  JsonObject options  = body.createNestedObject("options");
+  options["pollingInterval"] = config.pollingInterval;
+  options["timeOffset"] = config.timeOffset;
+  
+  String reqBody;
+  serializeJson(body, reqBody);
+  Serial.println(reqBody);
+//  reqBody += ownerId;
+//  reqBody += "\"}";
+  
   String payload = post(reqBody, apiServer);
   Serial.println(payload);
   if (payload == "-1") {
