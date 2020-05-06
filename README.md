@@ -149,6 +149,13 @@ Moisture Sensor
   </tr>
 </table>
 
+## B. Arduino Device Manual
+### 1. Source Code
+* May need to change the Web Service URL in the main.ino, search for the line "#define DEFAULT_API_SERVER "http://54.254.164.155" and replace it with your endpoint URL
+### 2. Arduino
+* If the Arduino board is turned on the first time, use the mobile app to connect to the Arduino via the Arduino wifi. To do so, login into the mobile app, click the PLUS button located at the bottom right to add a new Arduino device; aftwards follow the instruction to connect, and configure the Arduino device.
+
+
 # 
 
 
