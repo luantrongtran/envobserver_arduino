@@ -1,3 +1,4 @@
+
 # EnvObserver
 
 EnvObserver is a a hobby project I created to record temperature, humidity, and soil moisture. This has 3 modules:
@@ -7,33 +8,32 @@ EnvObserver is a a hobby project I created to record temperature, humidity, and 
 *  [EnvObserver\_mobile](https://github.com/luantrongtran/envobservers_mobile): a hybrid mobile app to see the data uploaded by Arduino
 
 
-##A. Setup Arduino IDE
-###1. Instal driver
+## A. Setup Arduino IDE
+### 1. Instal driver
 *   Download the driver (for Mac) from the following link:
-
 [https://raw.githubusercontent.com/nodemcu/nodemcu-devkit/master/Drivers/CH341SER_MAC.ZIP](https://raw.githubusercontent.com/nodemcu/nodemcu-devkit/master/Drivers/CH341SER_MAC.ZIP)
 
 
 
-###2. Install arduino Libraries
+### 2. Install arduino Libraries
 *   Install RTC DS3231 library named "RTC by Makuna" by Michael C. Miller
 
 
 
 
-###3. Board Setup
+### 3. Board Setup
 *   Install driver (if using Mac)
 *   Select the board in Arduino: tool -> Board -> "Node MCU 1.0 (ESP-12E Module)"
 
 
 
 
-###4. Port selection
+### 4. Port selection
 
     There are different models of ESP8266 nodeMCU, therefore, the port appearing in the Arduino may vary. A way to know which is the port of the ESP8266 is to compare the port list before and after the board plugged into the PC.
     Otherwise, try port names containing “1430”
 
-###5. Upload code on ESP8266 board
+### 5. Upload code on ESP8266 board
     1. Download source code at [https://codeload.github.com/luantrongtran/envobserver_arduino/zip/master](https://codeload.github.com/luantrongtran/envobserver_arduino/zip/master) 
     2. Open Android IDE
     3. Unzip and Open the downloaded folder
@@ -46,8 +46,8 @@ EnvObserver is a a hobby project I created to record temperature, humidity, and 
 
 
 
-#B. Schematic
-##1. Humidity & Temperature Sensor
+# B. Schematic
+## 1. Humidity & Temperature Sensor
 
 <table>
   <tr>
@@ -80,7 +80,7 @@ DH11 / DH12
 
 
 
-##2. RTC (DS3231
+## 2. RTC (DS3231
 
 <table>
   <tr>
@@ -119,7 +119,7 @@ DS3231
 
 
 
-##3. Soil Sensor
+## 3. Soil Sensor
 
 <table>
   <tr>
@@ -149,20 +149,6 @@ Moisture Sensor
   </tr>
 </table>
 
-
-
 # 
 
 
-
-#3. Mobile app
-
-    The mobile app can be used to control EnvObserver devices, and observe their data.
-    Github: https://github.com/luantrongtran/envobservers_mobile
-
-
-# 
-
-
-#4. Arduino Source Code
- Github: https://github.com/luantrongtran/envobserver_arduino
